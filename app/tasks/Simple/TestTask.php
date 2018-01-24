@@ -45,5 +45,26 @@ class TestTask extends Task
         }
     }
 
+    /**
+     * @desc   贪婪算法 【匹配第一个合适的】
+     * @author limx
+     */
+    public function greedyAction()
+    {
+        $regex = "/(.*):/U";
+        $arr = [
+            'asd:fa:fzxx',
+            'ddd:dd:zyy',
+            'afff:fff:azz',
+            'affff:ffay:yz',
+            'aff:fff:fayxy',
+        ];
+        echo Color::colorize('匹配到第一个冒号:', Color::FG_LIGHT_RED) . PHP_EOL;
+        foreach ($arr as $item) {
+            preg_match($regex, $item, $result);
+            dump($result[1]);
+        }
+    }
+
 }
 
