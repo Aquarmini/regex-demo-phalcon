@@ -24,18 +24,6 @@ abstract class Socket extends Task
     // 端口号
     protected $port = 11520;
 
-    // @see https://wiki.swoole.com/wiki/page/274.html Swoole文档Socket配置选项
-    protected $config = [
-        'pid_file' => ROOT_PATH . '/socket.pid',
-        'user' => 'nginx',
-        'group' => 'nginx',
-        'daemonize' => false,
-        // 'worker_num' => 8, // cpu核数1-4倍比较合理 不写则为cpu核数
-        'max_request' => 500, // 每个worker进程最大处理请求次数
-    ];
-
-    protected $params;
-
     public function mainAction($params = [])
     {
         if (!extension_loaded('swoole')) {
@@ -43,13 +31,11 @@ abstract class Socket extends Task
             return;
         }
 
-        // 设置输入参数
-        $this->params = $params;
-
         set_time_limit(0);
         $server = new swoole_server("0.0.0.0", $this->port);
 
-        $server->set($this->config);
+        $config = $this->getConfig();
+        $server->set($config);
 
         foreach ($this->events() as $name => $callback) {
             $server->on($name, $callback);
@@ -68,20 +54,6 @@ abstract class Socket extends Task
     protected function beforeServerStart(swoole_server $server)
     {
         $this->ready($server);
-
-        // 增加 用户自定义的工作进程
-        //
-        // $worker = new swoole_process(function (swoole_process $worker) {
-        //     swoole_timer_tick(1000, function () use ($worker) {
-        //         echo 'tick:' . time() . ':' . $worker->pid . PHP_EOL;
-        //     });
-        //     $server->tick(1000, function () {
-        //         echo 'tick:' . time() . PHP_EOL;
-        //     });
-        // });
-        //
-        // $server->addProcess($worker);
-
     }
 
     /**
@@ -102,5 +74,23 @@ abstract class Socket extends Task
         echo Color::colorize("-------------------------------------------", Color::FG_LIGHT_GREEN) . PHP_EOL;
         echo Color::colorize("     Socket服务器开启 端口：{$this->port}     ", Color::FG_LIGHT_GREEN) . PHP_EOL;
         echo Color::colorize("-------------------------------------------", Color::FG_LIGHT_GREEN) . PHP_EOL;
+    }
+
+    /**
+     * @desc   获取配置
+     * @author limx
+     * @see    https://wiki.swoole.com/wiki/page/274.html Server配置
+     * @return array
+     */
+    protected function getConfig()
+    {
+        $pidsDir = di('config')->application->pidsDir;
+        return [
+            'pid_file' => $pidsDir . 'socket.pid',
+            'user' => 'nginx',
+            'group' => 'nginx',
+            'daemonize' => false,
+            'max_request' => 500,
+        ];
     }
 }
